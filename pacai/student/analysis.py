@@ -11,50 +11,50 @@ NOT_POSSIBLE = None
 
 def question2():
     """
-    [Enter a description of what you did here.]
+    Reduced noise to encourage the agent to take a more deterministic path.
     """
 
     answerDiscount = 0.9
-    answerNoise = 0.2
+    answerNoise = 0.0
 
     return answerDiscount, answerNoise
 
 def question3a():
     """
-    [Enter a description of what you did here.]
+    Prefer the close exit, risking the cliff by reducing noise.
     """
 
-    answerDiscount = 0.9
-    answerNoise = 0.2
-    answerLivingReward = 0.0
+    answerDiscount = 0.3
+    answerNoise = 0.0
+    answerLivingReward = -1.0
 
     return answerDiscount, answerNoise, answerLivingReward
 
 def question3b():
     """
-    [Enter a description of what you did here.]
+    Prefer the close exit, avoiding the cliff by keeping some noise.
     """
 
-    answerDiscount = 0.9
+    answerDiscount = 0.3
     answerNoise = 0.2
-    answerLivingReward = 0.0
+    answerLivingReward = -1.0
 
     return answerDiscount, answerNoise, answerLivingReward
 
 def question3c():
     """
-    [Enter a description of what you did here.]
+    Prefer the distant exit, risking the cliff by reducing noise.
     """
 
     answerDiscount = 0.9
-    answerNoise = 0.2
+    answerNoise = 0.0
     answerLivingReward = 0.0
 
     return answerDiscount, answerNoise, answerLivingReward
 
 def question3d():
     """
-    [Enter a description of what you did here.]
+    Prefer the distant exit, avoiding the cliff by keeping some noise.
     """
 
     answerDiscount = 0.9
@@ -65,24 +65,21 @@ def question3d():
 
 def question3e():
     """
-    [Enter a description of what you did here.]
+    Avoid both exits and maximize living time by setting a high living reward.
     """
 
     answerDiscount = 0.9
     answerNoise = 0.2
-    answerLivingReward = 0.0
+    answerLivingReward = 10.0
 
     return answerDiscount, answerNoise, answerLivingReward
 
 def question6():
     """
-    [Enter a description of what you did here.]
+    Q-learning is not possible with the given constraints.
     """
-
-    answerEpsilon = 0.3
-    answerLearningRate = 0.5
-
-    return answerEpsilon, answerLearningRate
+    
+    return NOT_POSSIBLE
 
 if __name__ == '__main__':
     questions = [

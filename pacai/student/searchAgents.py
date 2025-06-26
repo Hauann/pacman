@@ -6,6 +6,7 @@ Good luck and happy searching!
 """
 
 import logging
+import heapq
 
 from pacai.core.actions import Actions
 from pacai.core.search import heuristic
@@ -13,6 +14,8 @@ from pacai.core.search.position import PositionSearchProblem
 from pacai.core.search.problem import SearchProblem
 from pacai.agents.base import BaseAgent
 from pacai.agents.search.base import SearchAgent
+from pacai.core.directions import Directions
+from pacai.util.priorityQueue import PriorityQueue
 
 class CornersProblem(SearchProblem):
     """
@@ -64,7 +67,35 @@ class CornersProblem(SearchProblem):
                 logging.warning('Warning: no food in corner ' + str(corner))
 
         # *** Your Code Here ***
-        raise NotImplementedError()
+        self._expanded = 0  # Number of expanded nodes
+        self.startState = (self.startingPosition, frozenset())
+
+    def startingState(self):
+        return self.startState
+
+    def isGoal(self, state):
+        _, visitedCorners = state
+        return len(visitedCorners) == 4
+
+    def successorStates(self, state):
+        successors = []
+        currentPosition, visitedCorners = state
+
+        for action in Directions.CARDINAL:
+            x, y = currentPosition
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+
+            if not self.walls[nextx][nexty]:
+                newVisited = set(visitedCorners)
+                if (nextx, nexty) in self.corners:
+                    newVisited.add((nextx, nexty))
+
+                # Fix: Ensure the successor state is a single tuple
+                successors.append((((nextx, nexty), frozenset(newVisited)), action, 1))
+
+        self._expanded += 1
+        return successors
 
     def actionsCost(self, actions):
         """
@@ -100,7 +131,13 @@ def cornersHeuristic(state, problem):
     # walls = problem.walls  # These are the walls of the maze, as a Grid.
 
     # *** Your Code Here ***
-    return heuristic.null(state, problem)  # Default to trivial solution
+    position, visitedCorners = state
+    unvisitedCorners = [corner for corner in problem.corners if corner not in visitedCorners]
+
+    if not unvisitedCorners:
+        return 0
+
+    return max(abs(position[0] - corner[0]) + abs(position[1] - corner[1]) for corner in unvisitedCorners)
 
 def foodHeuristic(state, problem):
     """
@@ -134,7 +171,12 @@ def foodHeuristic(state, problem):
     position, foodGrid = state
 
     # *** Your Code Here ***
-    return heuristic.null(state, problem)  # Default to the null heuristic.
+    foodList = foodGrid.asList()
+
+    if not foodList:
+        return 0
+
+    return max(abs(position[0] - food[0]) + abs(position[1] - food[1]) for food in foodList)
 
 class ClosestDotSearchAgent(SearchAgent):
     """
@@ -176,7 +218,9 @@ class ClosestDotSearchAgent(SearchAgent):
         # problem = AnyFoodSearchProblem(gameState)
 
         # *** Your Code Here ***
-        raise NotImplementedError()
+        from pacai.core.search.search import breadthFirstSearch
+        problem = AnyFoodSearchProblem(gameState)
+        return breadthFirstSearch(problem)
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -204,6 +248,9 @@ class AnyFoodSearchProblem(PositionSearchProblem):
 
         # Store the food for later reference.
         self.food = gameState.getFood()
+    
+    def isGoal(self, state):
+        return self.food[state[0]][state[1]]
 
 class ApproximateSearchAgent(BaseAgent):
     """
@@ -221,3 +268,35 @@ class ApproximateSearchAgent(BaseAgent):
 
     def __init__(self, index, **kwargs):
         super().__init__(index, **kwargs)
+    
+    def registerInitialState(self, state):
+        self._visited = set()
+
+    def getAction(self, state):
+        """
+        Get an action for Pacman based on an approximate greedy strategy.
+        """
+
+        legalActions = state.getLegalActions()
+        if Directions.STOP in legalActions:
+            legalActions.remove(Directions.STOP)
+
+        bestAction = None
+        minDistance = float('inf')
+
+        for action in legalActions:
+            successor = state.generateSuccessor(0, action)
+            pacmanPosition = successor.getPacmanPosition()
+
+            if pacmanPosition in self._visited:
+                continue
+
+            distance = min(abs(pacmanPosition[0] - food[0]) + abs(pacmanPosition[1] - food[1])
+                           for food in state.getFood().asList() or [(0, 0)])
+
+            if distance < minDistance:
+                minDistance = distance
+                bestAction = action
+
+        self._visited.add(state.getPacmanPosition())
+        return bestAction or Directions.STOP
